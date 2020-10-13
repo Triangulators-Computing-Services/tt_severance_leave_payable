@@ -1,0 +1,73 @@
+<openerp>
+    <data>
+        <record id="leave_payable_window_action" model="ir.actions.act_window">
+          <field name="name">Annual Leave Payable</field>
+          <field name="res_model">leave.payable</field>
+          <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="leave_payable_form_view" model="ir.ui.view">
+          <field name="name">Leave Payable Form View</field>
+          <field name="model">leave.payable</field>
+          <field name="type">form</field>
+          <field name="arch" type="xml">
+            <form string="Leave Payable">
+              <header>
+                <button class="oe_highlight" id="populate_btn" name="populate_employees" string="Filter and compute" type="object"/>
+              </header>
+              <sheet>
+                  <group>
+                    <group>
+                      <field name="name"/>
+                    </group>
+<!--                    <group string="Configurations">-->
+
+<!--                    </group>-->
+                  </group>
+<!--                  <group>-->
+<!--                    <group string="">-->
+
+<!--                    </group>-->
+<!--                  </group>-->
+
+                  <notebook>
+                    <page string="Annual Leave Eligible Employees">
+                      <field name="leave_payable_line_ids">
+                        <tree editable="bottom" options="{'no_create': True}">
+                          <field name="employee_name"/>
+                          <field name="contract_reference"/>
+                          <field name="wage"/>
+                          <field name="leave_remaining"/>
+                          <field name="years_of_service"/>
+    <!--                      <field name="severance_tax_payable"/>-->
+    <!--                      <field name="severance_payable_after_tax" sum="Total Net pay"/>-->
+                        </tree>
+                      </field>
+                    </page>
+    <!--                <page string="Severance comparison">-->
+    <!--                  <field name="total_severance_forecast"/>-->
+    <!--                  <field name="past_year_severance"/>-->
+    <!--&lt;!&ndash;                  <field name="total_severance_forecast"/>&ndash;&gt;-->
+    <!--                </page>-->
+                  </notebook>
+              </sheet>
+            </form>
+          </field>
+        </record>
+
+        <record id="leave_payable_tree_view" model="ir.ui.view">
+          <field name="name">Annual Leave Payable Tree</field>
+          <field name="model">leave.payable</field>
+          <field name="arch" type="xml">
+            <tree string="Annual Leave Payable Tree">
+              <field name="name"/>
+<!--              <field name="config_reference"/>-->
+            </tree>
+          </field>
+        </record>
+
+
+        <menuitem action="leave_payable_window_action" id="leave_payable_menu_item" name="Annual Leave Payable" parent="severance_leave_payable_menu_root"/>
+
+    </data>
+</openerp>

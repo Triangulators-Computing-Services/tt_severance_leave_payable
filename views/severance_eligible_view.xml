@@ -1,0 +1,79 @@
+<openerp>
+  <data>
+    <record id="severance_eligible_window" model="ir.actions.act_window">
+      <field name="name">Severance</field>
+      <field name="res_model">severance.eligible</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+
+    <record id="severance_form_view" model="ir.ui.view">
+      <field name="name">Severance Form View</field>
+      <field name="model">severance.eligible</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Severance">
+          <header>
+            <button class="oe_highlight" id="populate_btn" name="populate_employees" string="Filter and compute" type="object"/>
+          </header>
+          <sheet>
+              <group>
+                <group>
+                  <field name="name"/>
+                </group>
+                <group string="Configurations">
+                  <field name="config_reference"/>
+                  <field name="turn_over_rate"/>
+                </group>
+              </group>
+              <group>
+                <group string="Severance breakdown">
+<!--                  <field name="total_severance_forecast"/>-->
+                  <field name="tax_amount"/>
+                  <field name="net_severance_value"/>
+                </group>
+              </group>
+
+              <notebook>
+                <page string="Severance per Employee">
+                  <field name="severance_eligible_lines">
+                    <tree editable="bottom" options="{'no_create': True}">
+                      <field name="employee_name"/>
+<!--                      <field name="contract_reference"/>-->
+<!--                      <field name="years_of_service"/>-->
+                      <field name="wage"/>
+                      <field name="severance_payable" sum="Total pay"/>
+                      <field name="severance_tax_payable" sum="Total Tax pay"/>
+<!--                      <field name="severance_tax_payable" sum="Total Tax pay"/>-->
+                      <field name="severance_payable_after_tax" sum="Total Net pay"/>
+                    </tree>
+                  </field>
+                </page>
+<!--                <page string="Severance comparison">-->
+<!--                  <field name="total_severance_forecast"/>-->
+<!--                  <field name="past_year_severance"/>-->
+<!--&lt;!&ndash;                  <field name="total_severance_forecast"/>&ndash;&gt;-->
+<!--                </page>-->
+              </notebook>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+
+    <record id="severance_eligible_tree_view" model="ir.ui.view">
+      <field name="name">Severance Eligible Tree</field>
+      <field name="model">severance.eligible</field>
+      <field name="arch" type="xml">
+        <tree string="Severance Eligible">
+          <field name="name"/>
+          <field name="config_reference"/>
+        </tree>
+      </field>
+    </record>
+
+    <menuitem id="severance_leave_payable_menu_root" name="Severance" parent="hr.menu_hr_root"/>
+    <menuitem action="severance_eligible_window" id="severance_menu_item" name="Severance" parent="severance_leave_payable_menu_root"/>
+
+  </data>
+</openerp>
