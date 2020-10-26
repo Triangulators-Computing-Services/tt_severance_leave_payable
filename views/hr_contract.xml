@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <field name="type_id" position="after">
                 <field name="provident_fund_applicable" />
+                <field name="severance_payed" />
             </field>
 <!--              <xpath expr="field[@name='type_id']" position="after">-->
 <!--                    -->

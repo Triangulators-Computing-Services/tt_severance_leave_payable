@@ -10,3 +10,4 @@ class SeveranceEligible(models.Model):
     _inherit = 'hr.contract'
 
     provident_fund_applicable = fields.Boolean(string='Provident Fund Applicable')
+    severance_payed = fields.Boolean(string='Severance Payed')

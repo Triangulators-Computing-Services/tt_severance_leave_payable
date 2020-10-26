@@ -9,61 +9,86 @@ from datetime import datetime
 class LeavePayable(models.Model):
     _name = 'leave.payable'
 
-    name = fields.Char(string='Name')
+    name = fields.Char(string='Name', readonly=True)
     date_current = fields.Date(default=datetime.today())
+
+    config_reference = fields.Many2one('severance.config.general', string='Config Reference')
+    turnover_rate = fields.Float(string="Turnover Rate (%)", required=True, default=100.00)
+    total_annual_leave_payable = fields.Float(string='Total Annual Leave Payable', readonly=True)
 
     leave_payable_line_ids = fields.One2many('leave.payable.line', 'leave_payable_id')
 
+    state = fields.Selection(
+        [
+            ("draft", "Draft"),
+            ("awaiting_approval", "Awaiting Approval"),
+            ("cancelled", "Cancelled"),
+            ("approved", "Approved"),
+        ], default="draft", string="Status", track_visibility='onchange',
+    )
+
     @api.multi
-    def wage_calc(self):
+    def calculate_payable(self):
+        gross_annual_leave_payable = 0.00
         for record in self.leave_payable_line_ids:
             record.wage = record.contract_reference.wage
+            wage_per_day = record.wage / self.config_reference.working_days
+            record.annual_leave_payable = wage_per_day * record.leaves
+            gross_annual_leave_payable += record.annual_leave_payable
+
+        self.total_annual_leave_payable = (gross_annual_leave_payable * self.turnover_rate) /100
+
+        self.state = "awaiting_approval"
 
     @api.multi
     def populate_employees(self):
-        if self.leave_payable_line_ids:
-            for record in self.leave_payable_line_ids:
-                record.unlink()
+        """Fetches employees with their contracts and continues to execute calculate_payable()"""
+        employee_ids = self.env['hr.employee'].search([])
 
-        emp = self.env['hr.employee'].search([])
-        for record in emp:
-            contract_find_return = self._contract_find(record)
-            # Because the function returns two values, they are returned in the form of a tuple
-            if contract_find_return:
-                employee_data = {
-                    "employee_name": record.id,
-                    "contract_reference": contract_find_return[0],
-                    "years_of_service": contract_find_return[1] / 365.25,
-                    "leave_payable_id": self.id,
-                }
-                if contract_find_return[1] / 365.25 >= 0.5:
-                    leave_obj = self.env["leave.payable.line"]
-                    leave_obj.create(employee_data)
+        for record in employee_ids:
+            domain = [('employee_id', '=', record.id)]
+            contract_result = self.env['hr.contract'].search(domain, limit=1)  # contract search for employee
 
-        self.wage_calc()
+            emp_data = {
+                "employee_name": record.id,
+                "contract_reference": contract_result.id,
+                "leaves": record.remaining_leaves,
+                "leave_payable_id": self.id,
+            }
+            emp_line_obj = self.env['leave.payable.line']
+            emp_line_obj.create(emp_data)
+
+        self.calculate_payable()
 
     @api.multi
-    def _contract_find(self, employee=None):
-        """Finds the contract of the employee in question"""
-        domain = [('employee_id', '=', employee.id)]
+    def cancel(self):
+        self.state = "cancelled"
 
-        contract_result = self.env['hr.contract'].search(domain, limit=1)
-        contract_id = fields.Many2one('hr.contract')
+    @api.multi
+    def revert(self):
+        self.state = "awaiting_approval"
 
-        difference = 0
+    @api.multi
+    def approve(self):
+        annual_leave_data = {
+            "total_annual_leave_payable": self.total_severance_forecast,
+            "leave_payable_reference": self.id,
+        }
+        self.env['leave.payable'].create(annual_leave_data)  # records the computed data to readonly model
 
-        for record in contract_result:
-            if record.provident_fund_applicable:
-                return 0
+        self.state = "approved"
 
-            contract_date = datetime.strptime(record.date_start, "%Y-%m-%d")  # input contract starting date
-            current_date = datetime.strptime(self.date_current, "%Y-%m-%d")  # input current date from Odoo
-            timedelta = current_date - contract_date  # time difference between the dates
-            diff = timedelta.days  # the time difference in days (out put is in 'Char')
-            difference = int(diff)  # convert 'Char' into Int
-            contract_id = record.id
+    @api.model
+    def create(self, vals):
+        vals["name"] = "Annual Leave Payable of " + str(datetime.now().year)
+        return super(LeavePayable, self).create(vals)
 
-        return contract_id, difference
+    @api.model
+    def unlink(self):  # TODO fix delete issue
+        for record in self:
+            if record.state not in ("draft", "awaiting_approval", "cancelled"):
+                raise Warning(_("You cannot delete a record that has been approved."))
+        return super(LeavePayable, self).unlink()
 
 
 class LeavePayableLine(models.Model):
@@ -73,6 +98,7 @@ class LeavePayableLine(models.Model):
 
     employee_name = fields.Many2one('hr.employee', sting='Employee Name', readonly=True)
     contract_reference = fields.Many2one('hr.contract', string='Contract Reference', readonly=True)
-    leave_remaining = fields.Integer(string='Remaining Leave')
+    leaves = fields.Integer(string='Remaining Leave')
     wage = fields.Float(strring='Wage')
     years_of_service = fields.Float(string='Years of Service')
+    annual_leave_payable = fields.Float(string="Annual Leave Payable")

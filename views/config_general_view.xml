@@ -15,7 +15,7 @@
               <header>
 <!--                <button class="oe_highlight" id="populate_btn" name="populate_employees" string="Shit" type="object"/>-->
               </header>
-              <sheet>
+                <sheet>
                   <group>
                       <group>
                           <field name="name"/>
@@ -24,6 +24,7 @@
                       <group>
                           <field name="working_days"/>
                           <field name="severance_eligibility_period"/>
+                          <field name="retirement_age"/>
                       </group>
                   </group>
                   <notebook>
@@ -38,7 +39,7 @@
                           </field>
                       </page>
                   </notebook>
-              </sheet>
+                </sheet>
             </form>
           </field>
         </record>

@@ -14,21 +14,36 @@
       <field name="arch" type="xml">
         <form string="Severance">
           <header>
-            <button class="oe_highlight" id="populate_btn" name="populate_employees" string="Filter and compute" type="object"/>
+            <button class="oe_highlight" id="populate_btn" name="populate_employees" string="Compute" type="object" states="draft"/>
+            <button id="recalculate_btn" name="populate_employees" string="Recompute" type="object" states="awaiting_approval"/>
+            <button class="oe_highlight" id="approve_btn" name="approve" string="Approve" type="object" states="awaiting_approval"/>
+            <button id="cancel_btn" name="cancel" string="cancel" type="object" states="awaiting_approval"/>
+            <button class="oe_highlight" id="revert_btn" name="revert" string="Revert" type="object" states="cancelled"/>
+            <field name="state" options="{'fold_field': 'fold'}" statusbar_visible="draft,awaiting_approval,approved,done" widget="statusbar"/>
           </header>
           <sheet>
               <group>
                 <group>
                   <field name="name"/>
+<!--                  <label string="Period"/>-->
+<!--                  <div>-->
+<!--                      <field name="start_date" class="oe_inline"/>-->
+<!--                      <h6 class="oe_inline"> </h6>-->
+<!--                      <field name="end_date" class="oe_inline"/>-->
+<!--                  </div>-->
+                  <field name="start_date"/>
+                  <field name="end_date"/>
                 </group>
                 <group string="Configurations">
                   <field name="config_reference"/>
+<!--                  <field name="eligibility_period" />-->
                   <field name="turn_over_rate"/>
+                  <field name="turn_over_rate_q"/>
                 </group>
               </group>
               <group>
-                <group string="Severance breakdown">
-<!--                  <field name="total_severance_forecast"/>-->
+                <group string="Severance Breakdown">
+                  <field name="total_severance_forecast"/>
                   <field name="tax_amount"/>
                   <field name="net_severance_value"/>
                 </group>
@@ -40,12 +55,12 @@
                     <tree editable="bottom" options="{'no_create': True}">
                       <field name="employee_name"/>
 <!--                      <field name="contract_reference"/>-->
-<!--                      <field name="years_of_service"/>-->
+                      <field name="years_of_service"/>
                       <field name="wage"/>
-                      <field name="severance_payable" sum="Total pay"/>
-                      <field name="severance_tax_payable" sum="Total Tax pay"/>
+                      <field name="severance_payable" />
+                      <field name="severance_tax_payable" />
 <!--                      <field name="severance_tax_payable" sum="Total Tax pay"/>-->
-                      <field name="severance_payable_after_tax" sum="Total Net pay"/>
+                      <field name="severance_payable_after_tax" />
                     </tree>
                   </field>
                 </page>
@@ -67,7 +82,9 @@
       <field name="arch" type="xml">
         <tree string="Severance Eligible">
           <field name="name"/>
-          <field name="config_reference"/>
+          <field name="state"/>
+          <field name="tax_amount"/>
+          <field name="net_severance_value"/>
         </tree>
       </field>
     </record>
