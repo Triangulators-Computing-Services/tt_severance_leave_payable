@@ -56,7 +56,7 @@
           </field>
         </record>
 
-        <menuitem action="config_general_window" id="config_general_menu_item" name="General Config" parent="severance_leave_payable_menu_root"/>
+        <menuitem action="config_general_window" id="config_general_menu_item" name="Severance Leave Payable Config" parent="tcs_ifrs_config.menu_ifrs_configurations"/>
 
     </data>
 </openerp>

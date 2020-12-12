@@ -10,10 +10,13 @@ class SeveranceEligible(models.Model):
     _name = 'severance.eligible'
     _description = "finds and stores all eligible employees for severance pay"
 
-    name = fields.Char(string='Name', readonly=True)
+    name = fields.Char(string='Name', readonly=True, store=True, compute='set_fiscal_year_name')
 
-    start_date = fields.Date(string='Start Date', required=True)
-    end_date = fields.Date(string='End Date', required=True)
+    fiscal_year = fields.Many2one('account.fiscalyear', string='Fiscal Year', required=True)
+    # fiscal_year_name = fields.Char(string="Fiscal Year Name", compute='set_fiscal_year_name')
+
+    start_date = fields.Date(string='Start Date')
+    end_date = fields.Date(string='End Date')
 
     config_reference = fields.Many2one('severance.config.general', required=True)
     turn_over_rate = fields.Float(string='Turnover Rate One (%)', required=True, default=100.00)
@@ -35,6 +38,10 @@ class SeveranceEligible(models.Model):
             ("approved", "Approved"),
         ], default="draft", string="Status", track_visibility='onchange',
     )
+
+    @api.depends('fiscal_year')
+    def set_fiscal_year_name(self):
+        self.name = "Severance payable of " + self.fiscal_year.name
 
     @api.multi
     def calculate_severance(self):
@@ -137,8 +144,8 @@ class SeveranceEligible(models.Model):
 
             # dates
             contract_date = datetime.strptime(record.date_start, "%Y-%m-%d")
-            end_date = datetime.strptime(self.end_date, "%Y-%m-%d")
-            start_date = datetime.strptime(self.start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(self.fiscal_year.date_stop, "%Y-%m-%d")
+            start_date = datetime.strptime(self.fiscal_year.date_start, "%Y-%m-%d")
 
             timedelta = end_date - contract_date  # time difference between the dates
             timedelta2 = start_date - contract_date
@@ -151,8 +158,8 @@ class SeveranceEligible(models.Model):
                 birthday = datetime.strptime(record.employee_id.birthday, "%Y-%m-%d")
                 timedelta_birthday = end_date - birthday
                 age = int(timedelta_birthday.days) / 365.25
-            else:
-                raise Warning(_("Please enter all the birthdays of employees for retirement calculation"))
+            # else:
+            #     raise Warning("Please enter all the birthdays of employees for retirement calculation")
 
         return contract_id, difference, difference2, age
 
@@ -168,6 +175,7 @@ class SeveranceEligible(models.Model):
     def approve(self):
         severance_data = {
             "name": self.name,
+            "fiscal_year": self.fiscal_year,
             "total_severance": self.total_severance_forecast,
             "tax_amount": self.tax_amount,
             "net_severance_value": self.net_severance_value,
@@ -179,10 +187,10 @@ class SeveranceEligible(models.Model):
 
         self.state = "approved"
 
-    @api.model
-    def create(self, vals):
-        vals["name"] = "Severance payable of " + vals["start_date"] + " to " + vals["end_date"]
-        return super(SeveranceEligible, self).create(vals)
+    # @api.model
+    # def create(self, vals):
+    #     # vals["name"] = "Severance payable of " + vals["fiscal_year_name"]
+    #     return super(SeveranceEligible, self).create(vals)
 
     @api.model
     def unlink(self):  # TODO fix delete issue
